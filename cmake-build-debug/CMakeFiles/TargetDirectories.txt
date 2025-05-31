@@ -1,0 +1,3 @@
+C:/Users/ASUS/CLionProjects/Circuit-Simulator/cmake-build-debug/CMakeFiles/Circuit_Simulator.dir
+C:/Users/ASUS/CLionProjects/Circuit-Simulator/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/ASUS/CLionProjects/Circuit-Simulator/cmake-build-debug/CMakeFiles/rebuild_cache.dir
