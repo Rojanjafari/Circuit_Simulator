@@ -2,10 +2,11 @@
 #include <string>
 #include <vector>
 #include <sstream>
-#include <limits> 
+#include <limits>
+#include <algorithm>
+#include <cctype>
+#include <algorithm>
 #include "Circuit.h"
-
-using namespace std;
 
 vector<string> split(const string& s, char delimiter) {
     vector<string> tokens;
@@ -17,6 +18,15 @@ vector<string> split(const string& s, char delimiter) {
     return tokens;
 }
 
+string trim(const string& s) {
+    size_t first = s.find_first_not_of(" \t\n\r");
+    if (string::npos == first) {
+        return s;
+    }
+    size_t last = s.find_last_not_of(" \t\n\r");
+    return s.substr(first, (last - first + 1));
+}
+
 int main() {
     Circuit circuit;
     string line;
@@ -26,9 +36,10 @@ int main() {
     while (true) {
         cout << "> ";
         getline(cin, line);
+        line = trim(line);
 
         vector<string> parts = split(line, ' ');
-        if (parts.empty()) {
+        if (parts.empty() || trim(parts[0]).empty()) {
             continue;
         }
 
@@ -55,6 +66,10 @@ int main() {
             cout << "  list GND                             - List ground connections" << endl;
             cout << "  nodes                                - List all available nodes" << endl;
             cout << "  rename node <old_name> <new_name>  - Rename a node (e.g., rename node N001 Vout)" << endl;
+            cout << "  print <analysis_type> <analysis_params...> <variable1> <variable2>...  - Display output" << endl;
+            cout << "    Examples:" << endl;
+            cout << "      print TRAN <Tstep> <Tstop> [<Tstart>] [<Tmaxstep>] V(n001) I(R1)" << endl;
+            cout << "      print DC <SourceName> <StartVal> <EndVal> <Increment> V(out) I(C1)" << endl;
             cout << "  exit                                 - Exit the simulator" << endl;
         } else if (command == "add") {
             if (parts.size() < 2) {
@@ -80,18 +95,20 @@ int main() {
                 cerr << "Error: Insufficient arguments for 'delete' command. Type 'help' for usage." << endl;
                 continue;
             }
-            string elementName = parts[1];
-            char elementTypePrefix = toupper(elementName[0]);
+            string target = parts[1];
+            if (target.length() < 1) {
+                cerr << "Error: Invalid element name for delete command." << endl;
+                continue;
+            }
 
-            if (elementTypePrefix == 'R') {
-                circuit.deleteElement("R", elementName.substr(1));
-            } else if (elementTypePrefix == 'C') {
-                circuit.deleteElement("C", elementName.substr(1));
-            } else if (elementTypePrefix == 'L') {
-                circuit.deleteElement("L", elementName.substr(1));
-            } else if (elementName == "GND" && parts.size() == 3) {
+            char elementTypePrefix = toupper(target[0]);
+
+            if (elementTypePrefix == 'R' || elementTypePrefix == 'C' || elementTypePrefix == 'L') {
+                circuit.deleteElement(string(1, elementTypePrefix), target);
+            } else if (target == "GND" && parts.size() == 3) {
                 circuit.deleteElement("GND", parts[2]);
-            } else {
+            }
+            else {
                 cerr << "Error: Invalid 'delete' command format or unsupported element type. Type 'help' for usage." << endl;
             }
         } else if (command == "list") {
@@ -124,10 +141,56 @@ int main() {
             if (parts.size() == 4 && parts[1] == "node") {
                 circuit.renameNode(parts[2], parts[3]);
             } else {
-                cerr << "ERROR: Invalid syntax correct format: rename node <old name> <new name>[cite: 73]." << endl;
+                cerr << "ERROR: Invalid syntax correct format: rename node <old name> <new name>." << endl;
             }
-        }
-        else {
+        } else if (command == "print") {
+            if (parts.size() < 3) {
+                cerr << "Error: Insufficient arguments for 'print' command. Type 'help' for usage." << endl;
+                continue;
+            }
+            string analysisType = parts[1];
+            transform(analysisType.begin(), analysisType.end(), analysisType.begin(), ::toupper);
+
+            size_t param_end_index = 0;
+            if (analysisType == "TRAN") {
+                if (parts.size() >= 4 && (parts[2].find('(') == string::npos && parts[3].find('(') == string::npos)) {
+                    param_end_index = 3;
+                    if (parts.size() >= 5 && parts[4].find('(') == string::npos) {
+                        param_end_index = 4;
+                        if (parts.size() >= 6 && parts[5].find('(') == string::npos) {
+                            param_end_index = 5;
+                        }
+                    }
+                }
+            } else if (analysisType == "DC") {
+                if (parts.size() >= 6 && (parts[2].find('(') == string::npos && parts[3].find('(') == string::npos &&
+                                          parts[4].find('(') == string::npos && parts[5].find('(') == string::npos)) {
+                    param_end_index = 5;
+                }
+            }
+
+            if (param_end_index == 0) {
+                cerr << "Error: Invalid 'print' command format or insufficient analysis parameters. Type 'help' for usage." << endl;
+                continue;
+            }
+
+            vector<string> analysisParams;
+            for (size_t i = 2; i <= param_end_index; ++i) {
+                analysisParams.push_back(parts[i]);
+            }
+
+            vector<string> variables;
+            for (size_t i = param_end_index + 1; i < parts.size(); ++i) {
+                variables.push_back(parts[i]);
+            }
+
+            if (variables.empty()) {
+                cerr << "Error: No variables specified for 'print' command. Type 'help' for usage." << endl;
+                continue;
+            }
+
+            circuit.printOutput(analysisType, analysisParams, variables);
+        } else {
             cerr << "Error: Unknown command '" << command << "'. Type 'help' for available commands." << endl;
         }
     }

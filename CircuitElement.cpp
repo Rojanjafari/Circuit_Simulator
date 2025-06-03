@@ -4,6 +4,7 @@
 
 #include "CircuitElement.h"
 #include <cctype>
+
 using namespace std;
 
 CircuitElement::CircuitElement(const string& name, const string& node1, const string& node2)

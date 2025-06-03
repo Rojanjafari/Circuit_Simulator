@@ -14,6 +14,7 @@
 #include <string>
 #include <memory> 
 #include <set>
+#include <map>
 
 using namespace std;
 
@@ -23,6 +24,8 @@ private:
     set<string> nodes;
 
     CircuitElement* findElement(const string& name);
+
+    bool isValidPrintVariable(const string& varName);
 
 public:
     Circuit();
@@ -44,6 +47,8 @@ public:
     bool elementExists(const string& name) const;
 
     bool nodeExists(const string& nodeName) const;
+
+    void printOutput(const string& analysisType, const vector<string>& analysisParams, const vector<string>& variables);
 };
 
 

@@ -3,12 +3,12 @@ project(Circuit_Simulator)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(CircuitSimulator
+add_executable(Circuit_Simulator
         main.cpp
-        src/CircuitElement.cpp
-        src/Resistor.cpp
-        src/Capacitor.cpp
-        src/Inductor.cpp
-        src/Ground.cpp
-        src/Circuit.cpp
+        CircuitElement.cpp
+        Resistor.cpp
+        Capacitor.cpp
+        Inductor.cpp
+        Ground.cpp
+        Circuit.cpp
 )
