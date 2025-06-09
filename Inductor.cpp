@@ -1,18 +1,14 @@
-//
-// Created by ASUS on 6/3/2025.
-//
+
 
 #include "Inductor.h"
 #include <iostream>
-#include <algorithm> 
-#include <cctype>    
+#include <algorithm>
+#include <cctype>
 
-using namespace std;
-
-Inductor::Inductor(const string& name, const string& node1, const string& node2, double value)
+Inductor::Inductor(const std::string& name, const std::string& node1, const std::string& node2, double value)
         : CircuitElement(name, node1, node2) {
     if (value <= 0) {
-        throw invalid_argument("Error: Inductance cannot be zero or negative.");
+        throw std::invalid_argument("Error: Inductance cannot be zero or negative.");
     }
     this->value = value;
 }
@@ -22,43 +18,43 @@ double Inductor::getValue() const {
 }
 
 void Inductor::displayInfo() const {
-    cout << "Inductor: " << name << ", Nodes: " << node1 << " - " << node2 << ", Value: " << value << " Henries" << endl;
+    std::cout << "Inductor: " << name << ", Nodes: " << node1 << " - " << node2 << ", Value: " << value << " Henries" << std::endl;
 }
 
-string Inductor::getType() const {
+std::string Inductor::getType() const {
     return "Inductor";
 }
 
-double Inductor::parseValue(const string& valueStr) {
-    string cleanedStr = valueStr;
-    transform(cleanedStr.begin(), cleanedStr.end(), cleanedStr.begin(), ::tolower);
+double Inductor::parseValue(const std::string& valueStr) {
+    std::string cleanedStr = valueStr;
+    std::transform(cleanedStr.begin(), cleanedStr.end(), cleanedStr.begin(), ::tolower);
 
-    size_t unitPos = string::npos;
+    size_t unitPos = std::string::npos;
     double multiplier = 1.0;
 
-    if ((unitPos = cleanedStr.find('h')) != string::npos) {
+    if ((unitPos = cleanedStr.find('h')) != std::string::npos) {
         if (unitPos == cleanedStr.length() - 1) {
             cleanedStr = cleanedStr.substr(0, unitPos);
         }
-    } else if ((unitPos = cleanedStr.find("mh")) != string::npos || (unitPos = cleanedStr.find('m')) != string::npos) {
+    } else if ((unitPos = cleanedStr.find("mh")) != std::string::npos || (unitPos = cleanedStr.find('m')) != std::string::npos) {
         multiplier = 1e-3;
-    } else if ((unitPos = cleanedStr.find("uh")) != string::npos || (unitPos = cleanedStr.find('u')) != string::npos) {
+    } else if ((unitPos = cleanedStr.find("uh")) != std::string::npos || (unitPos = cleanedStr.find('u')) != std::string::npos) {
         multiplier = 1e-6;
-    } else if ((unitPos = cleanedStr.find("nh")) != string::npos || (unitPos = cleanedStr.find('n')) != string::npos) {
+    } else if ((unitPos = cleanedStr.find("nh")) != std::string::npos || (unitPos = cleanedStr.find('n')) != std::string::npos) {
         multiplier = 1e-9;
-    } else if ((unitPos = cleanedStr.find("ph")) != string::npos || (unitPos = cleanedStr.find('p')) != string::npos) {
+    } else if ((unitPos = cleanedStr.find("ph")) != std::string::npos || (unitPos = cleanedStr.find('p')) != std::string::npos) {
         multiplier = 1e-12;
     }
 
     try {
-        if (unitPos != string::npos) {
-            return stod(cleanedStr.substr(0, unitPos)) * multiplier;
+        if (unitPos != std::string::npos) {
+            return std::stod(cleanedStr.substr(0, unitPos)) * multiplier;
         } else {
-            return stod(cleanedStr);
+            return std::stod(cleanedStr);
         }
-    } catch (const invalid_argument& e) {
-        throw invalid_argument("Error: Invalid inductance value format.");
-    } catch (const out_of_range& e) {
-        throw out_of_range("Error: Inductance value out of range.");
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument("Error: Invalid inductance value format.");
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range("Error: Inductance value out of range.");
     }
 }

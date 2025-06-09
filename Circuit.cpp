@@ -1,20 +1,23 @@
-//
-// Created by ASUS on 6/3/2025.
-//
 
 #include "Circuit.h"
 #include <iostream>
-#include <algorithm> 
+#include <algorithm>
 #include <cctype>
 #include <limits>
 #include <set>
 
-using namespace std;
-
 Circuit::Circuit() {
+
+
 }
 
-CircuitElement* Circuit::findElement(const string& name) {
+void Circuit::clearElements() {
+    elements.clear();
+    nodes.clear();
+    std::cout << "Circuit cleared." << std::endl;
+}
+
+CircuitElement* Circuit::findElement(const std::string& name) {
     for (const auto& element : elements) {
         if (element->getName() == name) {
             return element.get();
@@ -23,7 +26,7 @@ CircuitElement* Circuit::findElement(const string& name) {
     return nullptr;
 }
 
-bool Circuit::elementExists(const string& name) const {
+bool Circuit::elementExists(const std::string& name) const {
     for (const auto& element : elements) {
         if (element->getName() == name) {
             return true;
@@ -32,102 +35,271 @@ bool Circuit::elementExists(const string& name) const {
     return false;
 }
 
-bool Circuit::nodeExists(const string& nodeName) const {
+bool Circuit::nodeExists(const std::string& nodeName) const {
     return nodes.count(CircuitElement::normalizeNodeName(nodeName));
 }
 
-void Circuit::addResistor(const string& name, const string& node1, const string& node2, const string& valueStr) {
+void Circuit::addResistor(const std::string& name, const std::string& node1, const std::string& node2, const std::string& valueStr) {
     if (elementExists(name)) {
-        cerr << "Error: Resistor " << name << " already exists in the circuit." << endl;
-        return;
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
     }
     try {
         double value = Resistor::parseValue(valueStr);
-        elements.push_back(make_unique<Resistor>(name, node1, node2, value));
+        elements.push_back(std::make_unique<Resistor>(name, node1, node2, value));
         nodes.insert(CircuitElement::normalizeNodeName(node1));
         nodes.insert(CircuitElement::normalizeNodeName(node2));
-        cout << "Resistor " << name << " added successfully." << endl;
-    } catch (const invalid_argument& e) {
-        cerr << e.what() << endl;
-        cerr << "Correct format: add R<name> <node1> <node2> <value>." << endl;
-    } catch (const out_of_range& e) {
-        cerr << e.what() << endl;
+        std::cout << "Resistor " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Negative or zero value for a component is invalid. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Invalid value out of range for resistor. ") + e.what());
     }
 }
 
-void Circuit::addCapacitor(const string& name, const string& node1, const string& node2, const string& valueStr) {
+void Circuit::addCapacitor(const std::string& name, const std::string& node1, const std::string& node2, const std::string& valueStr) {
     if (elementExists(name)) {
-        cerr << "Error: Capacitor " << name << " already exists in the circuit." << endl;
-        return;
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
     }
     try {
         double value = Capacitor::parseValue(valueStr);
-        elements.push_back(make_unique<Capacitor>(name, node1, node2, value));
+        elements.push_back(std::make_unique<Capacitor>(name, node1, node2, value));
         nodes.insert(CircuitElement::normalizeNodeName(node1));
         nodes.insert(CircuitElement::normalizeNodeName(node2));
-        cout << "Capacitor " << name << " added successfully." << endl;
-    } catch (const invalid_argument& e) {
-        cerr << e.what() << endl;
-        cerr << "Correct format: add C<name> <node1> <node2> <value>." << endl;
-    } catch (const out_of_range& e) {
-        cerr << e.what() << endl;
+        std::cout << "Capacitor " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Negative or zero value for a component is invalid. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Invalid value out of range for capacitor. ") + e.what());
     }
 }
 
-void Circuit::addInductor(const string& name, const string& node1, const string& node2, const string& valueStr) {
+void Circuit::addInductor(const std::string& name, const std::string& node1, const std::string& node2, const std::string& valueStr) {
     if (elementExists(name)) {
-        cerr << "Error: Inductor " << name << " already exists in the circuit." << endl;
-        return;
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
     }
     try {
         double value = Inductor::parseValue(valueStr);
-        elements.push_back(make_unique<Inductor>(name, node1, node2, value));
+        elements.push_back(std::make_unique<Inductor>(name, node1, node2, value));
         nodes.insert(CircuitElement::normalizeNodeName(node1));
         nodes.insert(CircuitElement::normalizeNodeName(node2));
-        cout << "Inductor " << name << " added successfully." << endl;
-    } catch (const invalid_argument& e) {
-        cerr << e.what() << endl;
-        cerr << "Correct format: add L<name> <node1> <node2> <value>." << endl;
-    } catch (const out_of_range& e) {
-        cerr << e.what() << endl;
+        std::cout << "Inductor " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Negative or zero value for a component is invalid. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Invalid value out of range for inductor. ") + e.what());
     }
 }
 
-void Circuit::addGround(const string& node) {
-    string normalizedNode = CircuitElement::normalizeNodeName(node);
+void Circuit::addGround(const std::string& node) {
+    std::string normalizedNode = CircuitElement::normalizeNodeName(node);
     if (elementExists("GND")) {
-        cerr << "Error: A ground element already exists in the circuit. Only one ground is supported." << endl;
-        return;
-    }
-    if (nodeExists(normalizedNode)) {
-        cerr << "Error: Node " << normalizedNode << " already exists. Ground cannot be added to an existing node that is not a dedicated ground node." << endl;
-        return;
+
+        std::cerr << "Warning: A ground element already exists in the circuit. Only one fixed 'GND' element is supported by this simulator." << std::endl;
+
     }
 
-    elements.push_back(make_unique<Ground>(normalizedNode));
+
+
+    if (nodes.empty()) {
+        std::cout << "Note: Adding first ground at node " << normalizedNode << ", which will serve as the circuit's reference." << std::endl;
+    }
+
+    elements.push_back(std::make_unique<Ground>(normalizedNode));
     nodes.insert(normalizedNode);
-    cout << "Ground added to node " << normalizedNode << " successfully." << endl;
+    std::cout << "Ground added to node " << normalizedNode << " successfully." << std::endl;
 }
 
-void Circuit::deleteElement(const string& typePrefix, const string& name) {
-    string fullElementName = typePrefix + name;
+void Circuit::addVoltageSource(const std::string& name, const std::string& node1, const std::string& node2,
+                               const std::string& type, const std::vector<std::string>& params) {
+    if (elementExists(name)) {
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
+    }
+    try {
+        if (type == "DC") {
+            if (params.size() != 1) {
+                throw std::invalid_argument("Error: Missing parameters for time-dependent source (DC Voltage).");
+            }
+            double value = VoltageSource::parseValue(params[0]);
+            elements.push_back(std::make_unique<VoltageSource>(name, node1, node2, value));
+        } else if (type == "SIN") {
+            if (params.size() != 3) {
+                throw std::invalid_argument("Error: Missing parameters for time-dependent source (SIN Voltage).");
+            }
+            double vOffset = std::stod(params[0]);
+            double vAmplitude = std::stod(params[1]);
+            double frequency = std::stod(params[2]);
+            elements.push_back(std::make_unique<VoltageSource>(name, node1, node2, vOffset, vAmplitude, frequency));
+        } else {
+            throw std::invalid_argument("Error: Unsupported voltage source type: " + type + ".");
+        }
+        nodes.insert(CircuitElement::normalizeNodeName(node1));
+        nodes.insert(CircuitElement::normalizeNodeName(node2));
+        std::cout << "Voltage source " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Invalid voltage source definition. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Value out of range for voltage source parameter. ") + e.what());
+    }
+}
 
-    auto it = remove_if(elements.begin(), elements.end(), [&](const unique_ptr<CircuitElement>& el) {
+void Circuit::addCurrentSource(const std::string& name, const std::string& node1, const std::string& node2, const std::string& valueStr) {
+    if (elementExists(name)) {
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
+    }
+    try {
+        double value = CurrentSource::parseValue(valueStr);
+        elements.push_back(std::make_unique<CurrentSource>(name, node1, node2, value));
+        nodes.insert(CircuitElement::normalizeNodeName(node1));
+        nodes.insert(CircuitElement::normalizeNodeName(node2));
+        std::cout << "Current source " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Invalid current source definition. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Value out of range for current source parameter. ") + e.what());
+    }
+}
+
+void Circuit::addPulseSource(const std::string& name, const std::string& node1, const std::string& node2,
+                             const std::string& type, const std::vector<std::string>& params) {
+    if (elementExists(name)) {
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
+    }
+    try {
+        elements.push_back(std::make_unique<PulseSource>(name, node1, node2, type, params));
+        nodes.insert(CircuitElement::normalizeNodeName(node1));
+        nodes.insert(CircuitElement::normalizeNodeName(node2));
+        std::cout << "Pulse source " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Missing parameters for time-dependent source. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Value out of range for pulse source parameter. ") + e.what());
+    }
+}
+
+void Circuit::addVCVS(const std::string& name, const std::string& node1, const std::string& node2,
+                      const std::string& ctrlNode1, const std::string& ctrlNode2, const std::string& gainStr) {
+    if (elementExists(name)) {
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
+    }
+    if (!nodeExists(ctrlNode1) || !nodeExists(ctrlNode2)) {
+        throw std::invalid_argument("Error: Dependent source has an undefined control element (control nodes not found).");
+    }
+    try {
+        double gain = DependentSource::parseGain(gainStr);
+        elements.push_back(std::make_unique<VCVS>(name, node1, node2, ctrlNode1, ctrlNode2, gain));
+        nodes.insert(CircuitElement::normalizeNodeName(node1));
+        nodes.insert(CircuitElement::normalizeNodeName(node2));
+        std::cout << "VCVS " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Invalid dependent source definition. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Gain value out of range for VCVS. ") + e.what());
+    }
+}
+
+void Circuit::addVCCS(const std::string& name, const std::string& node1, const std::string& node2,
+                      const std::string& ctrlNode1, const std::string& ctrlNode2, const std::string& gainStr) {
+    if (elementExists(name)) {
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
+    }
+    if (!nodeExists(ctrlNode1) || !nodeExists(ctrlNode2)) {
+        throw std::invalid_argument("Error: Dependent source has an undefined control element (control nodes not found).");
+    }
+    try {
+        double gain = DependentSource::parseGain(gainStr);
+        elements.push_back(std::make_unique<VCCS>(name, node1, node2, ctrlNode1, ctrlNode2, gain));
+        nodes.insert(CircuitElement::normalizeNodeName(node1));
+        nodes.insert(CircuitElement::normalizeNodeName(node2));
+        std::cout << "VCCS " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Invalid dependent source definition. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Gain value out of range for VCCS. ") + e.what());
+    }
+}
+
+void Circuit::addCCVS(const std::string& name, const std::string& node1, const std::string& node2,
+                      const std::string& ctrlVoltageSourceName, const std::string& gainStr) {
+    if (elementExists(name)) {
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
+    }
+    if (!elementExists(ctrlVoltageSourceName) || findElement(ctrlVoltageSourceName)->getType() != "VoltageSource") {
+        throw std::invalid_argument("Error: Dependent source has an undefined control element (control voltage source not found or not a voltage source).");
+    }
+    try {
+        double gain = DependentSource::parseGain(gainStr);
+        elements.push_back(std::make_unique<CCVS>(name, node1, node2, ctrlVoltageSourceName, gain));
+        nodes.insert(CircuitElement::normalizeNodeName(node1));
+        nodes.insert(CircuitElement::normalizeNodeName(node2));
+        std::cout << "CCVS " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Invalid dependent source definition. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Gain value out of range for CCVS. ") + e.what());
+    }
+}
+
+void Circuit::addCCCS(const std::string& name, const std::string& node1, const std::string& node2,
+                      const std::string& ctrlVoltageSourceName, const std::string& gainStr) {
+    if (elementExists(name)) {
+        throw std::invalid_argument("Error: Duplicate node or component name detected: " + name + ".");
+    }
+    if (!elementExists(ctrlVoltageSourceName) || findElement(ctrlVoltageSourceName)->getType() != "VoltageSource") {
+        throw std::invalid_argument("Error: Dependent source has an undefined control element (control voltage source not found or not a voltage source).");
+    }
+    try {
+        double gain = DependentSource::parseGain(gainStr);
+        elements.push_back(std::make_unique<CCCS>(name, node1, node2, ctrlVoltageSourceName, gain));
+        nodes.insert(CircuitElement::normalizeNodeName(node1));
+        nodes.insert(CircuitElement::normalizeNodeName(node2));
+        std::cout << "CCCS " << name << " added successfully." << std::endl;
+    } catch (const std::invalid_argument& e) {
+        throw std::invalid_argument(std::string("Error: Invalid dependent source definition. ") + e.what());
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(std::string("Error: Gain value out of range for CCCS. ") + e.what());
+    }
+}
+
+
+void Circuit::deleteElement(const std::string& typePrefix, const std::string& name) {
+    std::string fullElementName = typePrefix + name;
+
+    auto it = std::remove_if(elements.begin(), elements.end(), [&](const std::unique_ptr<CircuitElement>& el) {
         return el->getName() == fullElementName;
     });
 
     if (it != elements.end()) {
         elements.erase(it, elements.end());
-        cout << "Element " << fullElementName << " deleted successfully." << endl;
+        std::cout << "Element " << fullElementName << " deleted successfully." << std::endl;
     } else {
+
         if (typePrefix == "R") {
-            cerr << "Error: Cannot delete resistor; component not found." << endl;
+            std::cerr << "Error: Cannot delete resistor; component not found." << std::endl;
         } else if (typePrefix == "C") {
-            cerr << "Error: Cannot delete capacitor; component not found." << endl;
+            std::cerr << "Error: Cannot delete capacitor; component not found." << std::endl;
         } else if (typePrefix == "L") {
-            cerr << "Error: Cannot delete inductor; component not found." << endl;
-        } else if (typePrefix == "GND") {
-            cerr << "Error: Node does not exist or Ground element not found." << endl;
+            std::cerr << "Error: Cannot delete inductor; component not found." << std::endl;
+        } else if (typePrefix == "V") {
+            std::cerr << "Error: Cannot delete voltage source; component not found." << std::endl;
+        } else if (typePrefix == "I") {
+            std::cerr << "Error: Cannot delete current source; component not found." << std::endl;
+        } else if (typePrefix == "VPULSE") {
+            std::cerr << "Error: Cannot delete pulse source; component not found." << std::endl;
+        } else if (typePrefix == "E" || typePrefix == "G" || typePrefix == "H" || typePrefix == "F") {
+            std::cerr << "Error: Cannot delete dependent source; component not found." << std::endl;
+        }
+        else if (typePrefix == "GND") {
+            std::string normalizedNode = CircuitElement::normalizeNodeName(name);
+            auto ground_it = std::remove_if(elements.begin(), elements.end(), [&](const std::unique_ptr<CircuitElement>& el) {
+                return el->getType() == "Ground" && el->getNode1() == normalizedNode;
+            });
+            if (ground_it != elements.end()) {
+                elements.erase(ground_it, elements.end());
+                nodes.erase(normalizedNode);
+                std::cout << "Ground at node " << normalizedNode << " deleted successfully." << std::endl;
+            } else {
+                std::cerr << "Error: Node does not exist or Ground element not found." << std::endl;
+            }
         }
     }
 }
@@ -135,24 +307,24 @@ void Circuit::deleteElement(const string& typePrefix, const string& name) {
 
 void Circuit::listAllElements() const {
     if (elements.empty()) {
-        cout << "No elements in the circuit." << endl;
+        std::cout << "No elements in the circuit." << std::endl;
         return;
     }
-    cout << "--- All Elements ---" << endl;
+    std::cout << "--- All Elements ---" << std::endl;
     for (const auto& element : elements) {
         element->displayInfo();
     }
-    cout << "--------------------" << endl;
+    std::cout << "--------------------" << std::endl;
 }
 
-void Circuit::listElementsByType(const string& type) const {
+void Circuit::listElementsByType(const std::string& type) const {
     bool found = false;
-    cout << "--- " << type << " Elements ---" << endl;
+    std::cout << "--- " << type << " Elements ---" << std::endl;
     for (const auto& element : elements) {
-        string elementType = element->getType();
-        transform(elementType.begin(), elementType.end(), elementType.begin(), ::tolower);
-        string searchType = type;
-        transform(searchType.begin(), searchType.end(), searchType.begin(), ::tolower);
+        std::string elementType = element->getType();
+        std::transform(elementType.begin(), elementType.end(), elementType.begin(), ::tolower);
+        std::string searchType = type;
+        std::transform(searchType.begin(), searchType.end(), searchType.begin(), ::tolower);
 
         if (elementType == searchType) {
             element->displayInfo();
@@ -160,70 +332,70 @@ void Circuit::listElementsByType(const string& type) const {
         }
     }
     if (!found) {
-        cout << "No " << type << " elements found." << endl;
+        std::cout << "No " << type << " elements found." << std::endl;
     }
-    cout << "--------------------" << endl;
+    std::cout << "--------------------" << std::endl;
 }
 
 void Circuit::listNodes() const {
     if (nodes.empty()) {
-        cout << "No nodes in the circuit." << endl;
+        std::cout << "No nodes in the circuit." << std::endl;
         return;
     }
-    cout << "Available nodes: ";
+    std::cout << "Available nodes: ";
     bool first = true;
     for (const auto& node : nodes) {
         if (!first) {
-            cout << ", ";
+            std::cout << ", ";
         }
-        cout << node;
+        std::cout << node;
         first = false;
     }
-    cout << endl;
+    std::cout << std::endl;
 }
 
-void Circuit::renameNode(const string& oldName, const string& newName) {
-    string normalizedOldName = CircuitElement::normalizeNodeName(oldName);
-    string normalizedNewName = CircuitElement::normalizeNodeName(newName);
+void Circuit::renameNode(const std::string& oldName, const std::string& newName) {
+    std::string normalizedOldName = CircuitElement::normalizeNodeName(oldName);
+    std::string normalizedNewName = CircuitElement::normalizeNodeName(newName);
 
     if (!nodeExists(normalizedOldName)) {
-        cerr << "ERROR: Node " << normalizedOldName << " does not exist in the circuit." << endl;
+        std::cerr << "ERROR: Node " << normalizedOldName << " not found in circuit." << std::endl;
         return;
     }
 
     if (nodeExists(normalizedNewName)) {
-        cerr << "ERROR: Node name " << normalizedNewName << " already exists." << endl;
+        std::cerr << "ERROR: Duplicate node or component name detected: " << normalizedNewName << "." << std::endl;
         return;
     }
+
 
     nodes.erase(normalizedOldName);
     nodes.insert(normalizedNewName);
 
-    for (const auto& element : elements) {
-        if (element->getNode1() == normalizedOldName) {
-        }
-        if (element->getNode2() == normalizedOldName) {
-        }
-    }
-    cout << "SUCCESS: Node renamed from " << normalizedOldName << " to " << normalizedNewName << "." << endl;
+
+
+
+    std::cout << "SUCCESS: Node renamed from " << normalizedOldName << " to " << normalizedNewName << "." << std::endl;
 }
 
-bool Circuit::isValidPrintVariable(const string& varName) {
-    if (varName.length() < 2)
-        return false;
+
+bool Circuit::isValidPrintVariable(const std::string& varName) {
+    if (varName.length() < 2) return false;
+
 
     if (varName[0] == 'V' && varName[1] == '(' && varName.back() == ')') {
-        string node_name = varName.substr(2, varName.length() - 3);
+        std::string node_name = varName.substr(2, varName.length() - 3);
         if (!nodeExists(node_name)) {
-            cerr << "Error: Node " << node_name << " not found in circuit." << endl;
+            std::cerr << "Error: Node " << node_name << " not found in circuit." << std::endl;
             return false;
         }
         return true;
     }
+
     else if (varName[0] == 'I' && varName[1] == '(' && varName.back() == ')') {
-        string component_name = varName.substr(2, varName.length() - 3);
+        std::string component_name = varName.substr(2, varName.length() - 3);
         if (!elementExists(component_name)) {
-            cerr << "Error: Component " << component_name << " not found in circuit." << endl;
+            std::cerr << "Error: Component " << component_name << " not found in circuit." << std::endl;
             return false;
         }
         return true;
@@ -231,64 +403,88 @@ bool Circuit::isValidPrintVariable(const string& varName) {
     return false;
 }
 
-void Circuit::printOutput(const string& analysisType, const vector<string>& analysisParams, const vector<string>& variables) {
-    cout << "--- Print Output ---" << endl;
-    cout << "Analysis Type: " << analysisType << endl;
+void Circuit::printOutput(const std::string& analysisType, const std::vector<std::string>& analysisParams, const std::vector<std::string>& variables) {
+
+    bool ground_found = false;
+    for (const auto& node : nodes) {
+        if (node == "GND" || node == "0") {
+            ground_found = true;
+            break;
+        }
+    }
+    if (!ground_found) {
+        std::cerr << "Error: No ground node detected in the circuit. Circuit cannot be analyzed without a reference ground." << std::endl;
+        return;
+    }
+
+
+    std::cout << "--- Print Output ---" << std::endl;
+    std::cout << "Analysis Type: " << analysisType << std::endl;
 
     if (analysisType == "TRAN") {
         if (analysisParams.size() < 2 || analysisParams.size() > 4) {
-            cerr << "Error: Invalid number of parameters for TRAN analysis. Expected: <Tstep> <Tstop> [<Tstart>] [<Tmaxstep>]." << endl;
+            std::cerr << "Error: Missing parameters for time-dependent source (TRAN analysis). Expected: <Tstep> <Tstop> [<Tstart>] [<Tmaxstep>]." << std::endl;
             return;
         }
-
-        for (const string& param : analysisParams) {
+        for (const std::string& param : analysisParams) {
             try {
-                stod(param);
-            } catch (const invalid_argument& e) {
-                cerr << "Error: Invalid numeric parameter for TRAN analysis: " << param << "." << endl;
+                std::stod(param);
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Error: Invalid numeric parameter for TRAN analysis: " << param << ". " << e.what() << std::endl;
                 return;
-            } catch (const out_of_range& e) {
-                cerr << "Error: TRAN analysis parameter out of range: " << param << "." << endl;
+            } catch (const std::out_of_range& e) {
+                std::cerr << "Error: TRAN analysis parameter out of range: " << param << ". " << e.what() << std::endl;
                 return;
             }
         }
     } else if (analysisType == "DC") {
         if (analysisParams.size() != 4) {
-            cerr << "Error: Invalid number of parameters for DC analysis. Expected: <SourceName> <Start Value> <EndValue> <Increment>." << endl;
+            std::cerr << "Error: Missing parameters for DC analysis. Expected: <SourceName> <Start Value> <EndValue> <Increment>." << std::endl;
+            return;
+        }
+
+        if (!elementExists(analysisParams[0])) {
+            std::cerr << "Error: Component " << analysisParams[0] << " not found in circuit. Cannot perform DC sweep." << std::endl;
+            return;
+        }
+        CircuitElement* source = findElement(analysisParams[0]);
+        if (source->getType() != "VoltageSource" && source->getType() != "CurrentSource") {
+            std::cerr << "Error: " << analysisParams[0] << " is not a VoltageSource or CurrentSource. Cannot perform DC sweep on this component." << std::endl;
             return;
         }
 
         for (size_t i = 1; i < analysisParams.size(); ++i) {
             try {
-                stod(analysisParams[i]);
-            } catch (const invalid_argument& e) {
-                cerr << "Error: Invalid numeric parameter for DC analysis: " << analysisParams[i] << "." << endl;
+                std::stod(analysisParams[i]);
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Error: Invalid numeric parameter for DC analysis: " << analysisParams[i] << ". " << e.what() << std::endl;
                 return;
-            } catch (const out_of_range& e) {
-                cerr << "Error: DC analysis parameter out of range: " << analysisParams[i] << "." << endl;
+            } catch (const std::out_of_range& e) {
+                std::cerr << "Error: DC analysis parameter out of range: " << analysisParams[i] << ". " << e.what() << std::endl;
                 return;
             }
         }
     } else {
-        cerr << "Error: Unsupported analysis type: " << analysisType << "." << endl;
+        std::cerr << "Error: Unsupported analysis type: " << analysisType << "." << std::endl;
         return;
     }
 
-    cout << "Analysis Parameters: ";
+    std::cout << "Analysis Parameters: ";
     for (const auto& param : analysisParams) {
-        cout << param << " ";
+        std::cout << param << " ";
     }
-    cout << endl;
+    std::cout << std::endl;
 
-    cout << "Variables to display:" << endl;
+    std::cout << "Variables to display:" << std::endl;
     for (const auto& var : variables) {
         if (isValidPrintVariable(var)) {
-            cout << "  - " << var << " (Valid)" << endl;
+            std::cout << "  - " << var << " (Valid)" << std::endl;
         } else {
-            cerr << "Error: One or more print variables are invalid. Cannot proceed with print command." << endl;
-            cout << "--------------------" << endl;
+
+            std::cerr << "Error: One or more print variables are invalid. Cannot proceed with print command." << std::endl;
+            std::cout << "--------------------" << std::endl;
             return;
         }
     }
-    cout << "--------------------" << endl;
+    std::cout << "--------------------" << std::endl;
 }

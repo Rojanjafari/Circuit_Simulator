@@ -1,35 +1,31 @@
-//
-// Created by ASUS on 6/3/2025.
-//
-
 #include "CircuitElement.h"
 #include <cctype>
 
-using namespace std;
-
-CircuitElement::CircuitElement(const string& name, const string& node1, const string& node2)
+CircuitElement::CircuitElement(const std::string& name, const std::string& node1, const std::string& node2)
         : name(name), node1(normalizeNodeName(node1)), node2(normalizeNodeName(node2)) {}
 
-const string& CircuitElement::getName() const {
+const std::string& CircuitElement::getName() const {
     return name;
 }
 
-const string& CircuitElement::getNode1() const {
+const std::string& CircuitElement::getNode1() const {
     return node1;
 }
 
-const string& CircuitElement::getNode2() const {
+const std::string& CircuitElement::getNode2() const {
     return node2;
 }
 
-string CircuitElement::normalizeNodeName(const string& node) {
+std::string CircuitElement::normalizeNodeName(const std::string& node) {
     if (node.empty()) {
         return "";
     }
-    string normalized = node;
-    if (normalized.length() > 1 && (normalized[0] == 'n' || normalized[0] == 'N') && isdigit(normalized[1])) {
+    std::string normalized = node;
+
+
+    if (normalized.length() > 1 && (normalized[0] == 'n' || normalized[0] == 'N') && std::isdigit(normalized[1])) {
         for (char &c : normalized) {
-            c = static_cast<char>(toupper(c));
+            c = static_cast<char>(std::toupper(c));
         }
     }
     return normalized;

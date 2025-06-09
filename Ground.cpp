@@ -1,19 +1,13 @@
-//
-// Created by ASUS on 6/3/2025.
-//
-
 #include "Ground.h"
 #include <iostream>
 
-using namespace std;
-
-Ground::Ground(const string& node)
+Ground::Ground(const std::string& node)
         : CircuitElement("GND", node) {}
 
 void Ground::displayInfo() const {
-    cout << "Ground: Node: " << node1 << endl;
+    std::cout << "Ground: Node: " << node1 << std::endl;
 }
 
-string Ground::getType() const {
+std::string Ground::getType() const {
     return "Ground";
 }
